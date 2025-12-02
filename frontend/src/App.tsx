@@ -1,0 +1,65 @@
+import { useState, useEffect } from "react";
+import { LoginPage } from "./components/LoginPage";
+import { POSLayout } from "./components/POSLayout";
+import { RestaurantProvider } from "./contexts/RestaurantContext";
+import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
+import { AlertCircle } from "lucide-react";
+
+export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [apiError, setApiError] = useState(false);
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+  };
+
+  // Check API connectivity on app start
+  useEffect(() => {
+    const checkApi = async () => {
+      try {
+        // Use the same API URL logic as api.ts
+        // Check local Java backend
+        const apiBaseUrl = 'http://localhost:8080/api';
+        
+        console.log('App.tsx: Checking API at:', apiBaseUrl);
+        const response = await fetch(`${apiBaseUrl}/tables`);
+        if (!response.ok) {
+          throw new Error('API not responding');
+        }
+        console.log('App.tsx: API check successful');
+        setApiError(false);
+      } catch (error) {
+        console.error('API connection error:', error);
+        setApiError(true);
+      }
+    };
+
+    checkApi();
+  }, []);
+
+  return (
+    <div className="size-full">
+      {apiError && (
+        <Alert variant="destructive" className="m-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>API Connection Error</AlertTitle>
+          <AlertDescription>
+            Cannot connect to the backend API. Please check your network connection and try again.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <RestaurantProvider>
+        {!isLoggedIn ? (
+          <LoginPage onLogin={handleLogin} />
+        ) : (
+          <POSLayout onLogout={handleLogout} />
+        )}
+      </RestaurantProvider>
+    </div>
+  );
+}
